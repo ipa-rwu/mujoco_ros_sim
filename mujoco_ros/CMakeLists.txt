@@ -16,35 +16,46 @@ IF(tocabi_lib_FOUND)
    ADD_DEFINITIONS(-DCOMPILE_SHAREDMEMORY)
 ENDIF()
 
-set(MUJOCO_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../mujoco210)
-
-message("MuJoCo path: " ${MUJOCO_PATH})
-
 catkin_package(
 DEPENDS   mujoco_ros_msgs
 )
 
+if(NOT DEFINED $ENV{MUJOCO_LOCATION})
+  set(MUJOCO_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../mujoco210)
+else()
+  set(MUJOCO_LOCATION $ENV{MUJOCO_LOCATION})
+endif()
 
-include_directories(
+message(STATUS ${MUJOCO_LOCATION})
+
+# set(MUJOCO_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/../mujoco210)
+
+set(MUJOCO_INCLUDE_DIR ${MUJOCO_LOCATION}/include)
+set(MUJOCO_BIN ${MUJOCO_LOCATION}/bin)
+
+
+## Specify additional locations of header files
+include_directories( 
   include
-  ${MUJOCO_PATH}/include
+  ${Boost_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
+  ${MUJOCO_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
 link_directories(
-  ${MUJOCO_PATH}/bin
-)
+  ${MUJOCO_BIN}
+  )
+
+## find libmujoco
+file(GLOB LIB_MUJOCO ${MUJOCO_BIN}/libmujoco[0-9][0-9][0-9].so)
+file(GLOB UI_SRC "${MUJOCO_INCLUDE_DIR}/uitools.c")
 
 IF(tocabi_lib_FOUND)
 include_directories(
   ${tocabi_lib_INCLUDE_DIRS}
 )
 ENDIF()
-
-file(GLOB LIB_MUJOCO ${MUJOCO_PATH}/bin/libmujoco210.so)
-
-file(GLOB UI_SRC "${MUJOCO_PATH}/include/uitools.c")
 
 add_library(mujoco_ros_lib
     ${UI_SRC}
@@ -62,8 +73,8 @@ target_link_libraries(mujoco_ros
    #GLU 
    #glut
    
-   ${MUJOCO_PATH}/bin/libglew.so
-   ${MUJOCO_PATH}/bin/libglfw.so.3
+   ${MUJOCO_BIN}/libglew.so
+   ${MUJOCO_BIN}/libglfw.so.3
  )
 
 add_dependencies(mujoco_ros_lib ${catkin_EXPORTED_TARGETS})
